@@ -1,2 +1,12 @@
 gradio==5.31.0
 requests==2.32.3
+ipykernel==6.29.5
+langchain==0.3.25
+langchain-community==0.3.24
+langchain-huggingface==0.2.0
+langgraph==0.4.7
+python-dotenv==1.1.0
+sentence-transformers==4.1.0
+faiss-cpu==1.11.0
+langchain-google-genai==2.1.4
+openai==1.82.0
