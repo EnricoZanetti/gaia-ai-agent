@@ -24,6 +24,7 @@ from langchain.schema import Document, HumanMessage, SystemMessage
 from langchain.tools.retriever import create_retriever_tool
 from langgraph.graph import MessagesState, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.graph import GraphConfig
 
 # local reusable tools -------------------------------------------------------
 from tools import web_search, wiki_search, calculator, arxiv_search
@@ -105,10 +106,9 @@ llm = ChatOpenAI(model="gpt-4o", temperature=0).bind_tools(TOOLS)
 def node_retriever(state: MessagesState):
     """Prepend best‑match solved QA as additional context."""
     query = state["messages"][0].content
-    hit = vstore.similarity_search(query, k=1)[0]
-    example = HumanMessage(content=f"Reference QA:\n{hit.page_content}")
-    # include system prompt once
-    return {"messages": [sys_msg] + state["messages"] + [example]}
+    hit1, hit2, *_ = vstore.similarity_search(query, k=2)
+    reference = HumanMessage(content=f"{hit1.page_content}\n\n---\n{hit2.page_content}")
+    return {"messages": [sys_msg, reference] + state["messages"]}
 
 
 def node_assistant(state: MessagesState):
@@ -129,7 +129,7 @@ builder.add_edge("retriever", "assistant")
 builder.add_conditional_edges("assistant", tools_condition)  # → tools or END
 builder.add_edge("tools", "assistant")  # loop back after tool call
 
-agent_graph = builder.compile()
+agent_graph = builder.compile(config=GraphConfig(recursion_limit=40))
 
 # ---------------------------------------------------------------------------
 # 7. helpers

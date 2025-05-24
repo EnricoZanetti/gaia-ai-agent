@@ -12,6 +12,7 @@ from langchain_community.document_loaders import WikipediaLoader, ArxivLoader
 
 __all__ = [
     "web_search",
+    "arxiv_search",
     "wiki_search",
     "calculator",
 ]
