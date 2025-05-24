@@ -1,4 +1,4 @@
-# GAIA Level‑1 Agent (LangGraph + OpenAI + FAISS)
+# GAIA AI Agent (LangGraph + OpenAI + FAISS)
 
 An intelligent agent designed to solve GAIA Level‑1 benchmark questions using retrieval-augmented generation (RAG), OpenAI's GPT-4o, and LangGraph orchestration.
 
