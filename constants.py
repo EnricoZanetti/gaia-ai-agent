@@ -14,6 +14,4 @@ You are a GAIA Level-1 assistant.
 * Single number → digits only (no commas, units, or % unless the question explicitly includes them).  
 * Single string → full words, no articles, no abbreviations; spell out digits unless numerals are shown in the question.  
 * List → comma-separated; apply the number/string rules to each element.
-
-Remember: the grader checks an exact match on what follows `FINAL ANSWER:`.  
 """
