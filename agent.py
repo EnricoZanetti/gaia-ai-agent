@@ -77,7 +77,7 @@ similar_q_tool = create_retriever_tool(
 TOOLS = [
     similar_q_tool,
     web_search,
-    wiki_search,
+    # wiki_search,
     calculator,
     arxiv_search,
 ]
