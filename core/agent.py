@@ -26,7 +26,7 @@ from langgraph.graph import MessagesState, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 # local reusable tools -------------------------------------------------------
-from tools import web_search, wiki_search, calculator, arxiv_search
+from utils.tools import web_search, wiki_search, calculator, arxiv_search
 
 # ---------------------------------------------------------------------------
 # 1. env & constants

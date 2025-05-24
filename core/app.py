@@ -2,7 +2,7 @@ import os
 import gradio as gr
 import requests
 import pandas as pd
-from agent import solve
+from core.agent import solve
 
 # --- Constants ---
 DEFAULT_API_URL = "https://agents-course-unit4-scoring.hf.space"
