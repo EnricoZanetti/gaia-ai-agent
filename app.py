@@ -3,6 +3,7 @@ import gradio as gr
 import requests
 import inspect
 import pandas as pd
+from agent import solve
 
 # --- Constants ---
 DEFAULT_API_URL = "https://agents-course-unit4-scoring.hf.space"
@@ -10,14 +11,13 @@ DEFAULT_API_URL = "https://agents-course-unit4-scoring.hf.space"
 
 # --- Basic Agent Definition ---
 class BasicAgent:
+    """Wraps the LangGraph agent built in agent.py"""
+
     def __init__(self):
-        print("BasicAgent initialized.")
+        print("LangGraph-based GAIA agent ready.")
 
     def __call__(self, question: str) -> str:
-        print(f"Agent received question (first 50 chars): {question[:50]}...")
-        fixed_answer = "This is a default answer."
-        print(f"Agent returning fixed answer: {fixed_answer}")
-        return fixed_answer
+        return solve(question)
 
 
 def run_and_submit_all(profile: gr.OAuthProfile | None):

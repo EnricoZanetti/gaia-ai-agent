@@ -1,16 +1,21 @@
-"""Minimal GAIA Level-1 agent
+# --------------------- agent.py ---------------------
+"""Minimal GAIA Level‑1 agent (OpenAI + FAISS)
 
-▶ Dependencies (install in *gaia_env*):
-   pip install langchain openai langgraph sentence-transformers faiss-cpu requests
+▶ Dependencies
+   pip install langchain langgraph sentence-transformers faiss-cpu \
+               langchain-openai langchain-huggingface \ 
+               python-dotenv requests openai
 
-▶ Env variables required:
-   OPENAI_API_KEY    – your OpenAI key
-   GAIA_API_BASE     – base URL of the GAIA evaluation API (e.g. https://gaia.example.com)
-   HF_USERNAME       – your Hugging Face username (for leaderboard)
-   AGENT_CODE_URL    – public code URL of this Space (…/tree/main)
+▶ Required env vars (can be placed in a local `.env` file)
+   OPENAI_API_KEY   – your OpenAI key
+   GAIA_API_BASE    – base URL of the GAIA evaluation API
+   HF_USERNAME      – your Hugging Face username
+   AGENT_CODE_URL   – public code URL of this Space (…/tree/main)
 
-Run » python agent.py            → manual CLI test
-Run » python agent.py --submit   → fetch 20 questions & submit to leaderboard
+Usage
+-----
+$ python agent.py "What city hosted Expo 2015?"   # single‑question test
+$ python agent.py --submit                         # answer & submit full eval set
 """
 
 from __future__ import annotations
@@ -23,42 +28,43 @@ import random
 import sys
 from typing import List
 
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.document_loaders import WikipediaLoader
+from langchain.tools import calculator
+
 import requests
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import HuggingFaceEmbeddings
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain.schema import Document, HumanMessage, SystemMessage
 from langchain.tools.retriever import create_retriever_tool
-from constants import SYSTEM_PROMPT
-from langchain.vectorstores import FAISS
 from langgraph.graph import MessagesState, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-
 # ---------------------------------------------------------------------------
-# 1. Config & safety checks
+# 1. Load env vars (supports a local .env file) & validate
 # ---------------------------------------------------------------------------
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-API_BASE = os.environ.get("GAIA_API_BASE")
-HF_USERNAME = os.environ.get("HF_USERNAME")
-AGENT_CODE_URL = os.environ.get("AGENT_CODE_URL")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+load_dotenv()
+API_BASE = os.getenv("GAIA_API_BASE")
+HF_USERNAME = os.getenv("HF_USERNAME")
+AGENT_CODE_URL = os.getenv("AGENT_CODE_URL")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if not all((API_BASE, HF_USERNAME, AGENT_CODE_URL, OPENAI_API_KEY)):
     sys.exit(
-        "[agent] 🔑  Please export GAIA_API_BASE, HF_USERNAME, AGENT_CODE_URL, OPENAI_API_KEY"
+        "[agent] 🔑  Missing one or more env vars: GAIA_API_BASE, HF_USERNAME, AGENT_CODE_URL, OPENAI_API_KEY"
     )
 
 # ---------------------------------------------------------------------------
-# 2. Load solved examples (metadata.jsonl)
+# 2. Load solved examples from metadata.jsonl
 # ---------------------------------------------------------------------------
-
 DATA_PATH = pathlib.Path(__file__).with_name("metadata.jsonl")
 if not DATA_PATH.exists():
-    sys.exit(
-        f"[agent] 📄  {DATA_PATH} not found – place metadata.jsonl beside agent.py"
-    )
-
-examples: List[dict] = [json.loads(line) for line in DATA_PATH.read_text().splitlines()]
+    sys.exit("[agent] 📄 metadata.jsonl missing next to agent.py")
+examples: List[dict] = [json.loads(l) for l in DATA_PATH.read_text().splitlines()]
 
 # ---------------------------------------------------------------------------
 # 3. Build FAISS vector store & retrieval tool
@@ -80,33 +86,48 @@ retriever = vstore.as_retriever(search_kwargs={"k": 3})
 similar_q_tool = create_retriever_tool(
     retriever,
     name="similar_questions",
-    description="Return up to three previously‑solved GAIA Level‑1 questions similar to the given query.",
+    description="Return up to three previously‑solved GAIA level‑1 Q&A pairs that resemble the current query.",
 )
 
-TOOLS = [similar_q_tool]
+
+# Web search (Tavily)
+def web_search(query: str) -> str:
+    return TavilySearchResults(max_results=3).invoke(query=query)
+
+
+# Wikipedia search
+def wiki_search(query: str) -> str:
+    docs = WikipediaLoader(query=query, load_max_docs=2).load()
+    return "\n\n---\n\n".join(d.page_content for d in docs)
+
+
+TOOLS = [
+    similar_q_tool,
+    web_search,
+    wiki_search,
+    calculator,  # optional math helper
+]
 
 # ---------------------------------------------------------------------------
-# 4. Build the system prompt (few‑shot examples)
+# 4. Build the system prompt with few‑shot examples
 # ---------------------------------------------------------------------------
-
 few_shots = random.sample(examples, k=3)
-
+SYSTEM_PROMPT = "You are a GAIA level‑1 agent. Answer with ONLY the final answer – no additional text."
 for ex in few_shots:
     SYSTEM_PROMPT += f"\nQ: {ex['Question']}\nA: {ex['Final answer']}"
 
 # ---------------------------------------------------------------------------
 # 5. Initialise OpenAI chat model & bind tools
 # ---------------------------------------------------------------------------
-
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, streaming=False).bind_tools(TOOLS)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).bind_tools(TOOLS)
 
 # ---------------------------------------------------------------------------
-# 6. LangGraph: assistant node + tool loop
+# 6. LangGraph orchestration
 # ---------------------------------------------------------------------------
 
 
-def _assistant(state: MessagesState):  # noqa: D401
-    """Run the LLM once."""
+def _assistant(state: MessagesState):
+    """Single LLM invocation step."""
     return {
         "messages": [
             llm.invoke([SystemMessage(content=SYSTEM_PROMPT)] + state["messages"])
@@ -123,19 +144,18 @@ builder.add_edge("tools", "assistant")
 agent_graph = builder.compile()
 
 # ---------------------------------------------------------------------------
-# 7. Public API: solve(question) & evaluate()
+# 7. Public helpers
 # ---------------------------------------------------------------------------
 
 
 def solve(question: str) -> str:
     """Return the agent's final answer for a single GAIA question."""
-    messages = [HumanMessage(content=question)]
-    output = agent_graph.invoke({"messages": messages})
-    return output["messages"][-1].content.strip()
+    result = agent_graph.invoke({"messages": [HumanMessage(content=question)]})
+    return result["messages"][-1].content.strip()
 
 
 def evaluate() -> None:
-    """Retrieve 20 eval questions, answer, submit, and print score."""
+    """Fetch 20 eval questions, solve, and POST to leaderboard."""
     qs = requests.get(f"{API_BASE}/questions", timeout=30).json()
     answers = [
         {"task_id": q["id"], "submitted_answer": solve(q["question"])} for q in qs
@@ -147,20 +167,18 @@ def evaluate() -> None:
         "answers": answers,
     }
     res = requests.post(f"{API_BASE}/submit", json=payload, timeout=60)
-    print("[agent] 🏆  Leaderboard response:", res.status_code, res.text)
+    print("[agent] 🏆 Leaderboard response:", res.status_code, res.text)
 
 
 # ---------------------------------------------------------------------------
-# 8. CLI entry‑point
+# 8. CLI interface
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run GAIA agent")
+    parser = argparse.ArgumentParser(description="GAIA agent runner")
     parser.add_argument("question", nargs="*", help="Manual question to solve")
     parser.add_argument(
-        "--submit",
-        action="store_true",
-        help="Run full evaluation & submit to leaderboard",
+        "--submit", action="store_true", help="Run full evaluation and submit"
     )
     args = parser.parse_args()
 

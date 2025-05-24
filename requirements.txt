@@ -10,3 +10,5 @@ sentence-transformers==4.1.0
 faiss-cpu==1.11.0
 langchain-google-genai==2.1.4
 openai==1.82.0
+langchain-openai==0.3.18
+langchain-huggingface==0.2.0
