@@ -35,13 +35,13 @@ os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 load_dotenv()
 
 API_BASE = os.getenv("GAIA_API_BASE")
-HF_USERNAME = os.getenv("HF_USERNAME")
+SPACE_HOST = os.getenv("SPACE_HOST")
 AGENT_CODE_URL = os.getenv("AGENT_CODE_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-if not all((API_BASE, HF_USERNAME, AGENT_CODE_URL, OPENAI_API_KEY)):
+if not all((API_BASE, SPACE_HOST, AGENT_CODE_URL, OPENAI_API_KEY)):
     sys.exit(
-        "[agent] 🔑  Missing GAIA_API_BASE / HF_USERNAME / AGENT_CODE_URL / OPENAI_API_KEY"
+        "[agent] 🔑  Missing GAIA_API_BASE / SPACE_HOST / AGENT_CODE_URL / OPENAI_API_KEY"
     )
 
 # ---------------------------------------------------------------------------
@@ -150,7 +150,7 @@ def evaluate() -> None:
         {"task_id": q["id"], "submitted_answer": solve(q["question"])} for q in qs
     ]
     payload = {
-        "username": HF_USERNAME,
+        "username": SPACE_HOST,
         "agent_code": AGENT_CODE_URL,
         "answers": answers,
     }
