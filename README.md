@@ -1,5 +1,5 @@
 ---
-title: Template Final Assignment
+title: GAIA AI Agent
 emoji: 🕵🏻‍♂️
 colorFrom: indigo
 colorTo: indigo
