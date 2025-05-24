@@ -34,7 +34,7 @@ def web_search(query: str) -> str:
 
 
 @tool
-def arvix_search(query: str) -> str:
+def arxiv_search(query: str) -> str:
     """Search Arxiv for a query and return maximum 3 results.
 
     Args:
