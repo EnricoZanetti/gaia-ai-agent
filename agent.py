@@ -27,10 +27,8 @@ import pathlib
 import random
 import sys
 from typing import List
+from tools import web_search, wiki_search, calculator, arvix_search
 
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_community.document_loaders import WikipediaLoader
-from langchain.tools import calculator
 
 import requests
 from dotenv import load_dotenv
@@ -64,7 +62,7 @@ if not all((API_BASE, HF_USERNAME, AGENT_CODE_URL, OPENAI_API_KEY)):
 DATA_PATH = pathlib.Path(__file__).with_name("metadata.jsonl")
 if not DATA_PATH.exists():
     sys.exit("[agent] 📄 metadata.jsonl missing next to agent.py")
-examples: List[dict] = [json.loads(l) for l in DATA_PATH.read_text().splitlines()]
+examples: List[dict] = [json.loads(line) for line in DATA_PATH.read_text().splitlines()]
 
 # ---------------------------------------------------------------------------
 # 3. Build FAISS vector store & retrieval tool
@@ -90,22 +88,12 @@ similar_q_tool = create_retriever_tool(
 )
 
 
-# Web search (Tavily)
-def web_search(query: str) -> str:
-    return TavilySearchResults(max_results=3).invoke(query=query)
-
-
-# Wikipedia search
-def wiki_search(query: str) -> str:
-    docs = WikipediaLoader(query=query, load_max_docs=2).load()
-    return "\n\n---\n\n".join(d.page_content for d in docs)
-
-
 TOOLS = [
     similar_q_tool,
     web_search,
     wiki_search,
-    calculator,  # optional math helper
+    calculator,
+    arvix_search,
 ]
 
 # ---------------------------------------------------------------------------
