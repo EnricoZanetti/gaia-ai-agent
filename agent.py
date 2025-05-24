@@ -26,7 +26,8 @@ from langgraph.graph import MessagesState, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 # local reusable tools -------------------------------------------------------
-from utils.tools import web_search, wiki_search, calculator, arxiv_search
+from tools import web_search, wiki_search, calculator, arxiv_search
+from constants import SYSTEM_PROMPT
 
 # ---------------------------------------------------------------------------
 # 1. env & constants
@@ -86,7 +87,6 @@ TOOLS = [
 # 4. system prompt (few‑shot)
 # ---------------------------------------------------------------------------
 few_shots = random.sample(examples, k=3)
-SYSTEM_PROMPT = "You are a GAIA Level‑1 assistant. Answer with **only** the final answer—no extra text."
 for ex in few_shots:
     SYSTEM_PROMPT += f"\nQ: {ex['Question']}\nA: {ex['Final answer']}"
 
