@@ -22,9 +22,8 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.schema import Document, HumanMessage, SystemMessage
 from langchain.tools.retriever import create_retriever_tool
-from langgraph.graph import MessagesState, START, StateGraph
+from langgraph.graph import MessagesState, START, StateGraph, GraphConfig
 from langgraph.prebuilt import ToolNode, tools_condition
-from langgraph.graph import GraphConfig
 
 # local reusable tools -------------------------------------------------------
 from tools import web_search, wiki_search, calculator, arxiv_search
@@ -129,7 +128,7 @@ builder.add_edge("retriever", "assistant")
 builder.add_conditional_edges("assistant", tools_condition)  # → tools or END
 builder.add_edge("tools", "assistant")  # loop back after tool call
 
-agent_graph = builder.compile(config=GraphConfig(recursion_limit=40))
+agent_graph = builder.compile(config=GraphConfig(recursion_limit=24))
 
 # ---------------------------------------------------------------------------
 # 7. helpers
