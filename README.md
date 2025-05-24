@@ -1,6 +1,6 @@
 # GAIA Level‑1 Agent (LangGraph + OpenAI + FAISS)
 
-An intelligent agent designed to solve GAIA Level‑1 benchmark questions using retrieval-augmented generation (RAG), OpenAI's GPT-4o-mini, and LangGraph orchestration.
+An intelligent agent designed to solve GAIA Level‑1 benchmark questions using retrieval-augmented generation (RAG), OpenAI's GPT-4o, and LangGraph orchestration.
 
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![LangGraph](https://img.shields.io/badge/langgraph-✓-blue)
@@ -11,7 +11,7 @@ An intelligent agent designed to solve GAIA Level‑1 benchmark questions using 
 
 ## 🔍 Features
 
-- Uses OpenAI `gpt-4o-mini` for reasoning
+- Uses OpenAI `gpt-4o` for reasoning
 - FAISS-based retrieval from solved examples
 - Additional tools: Wikipedia search, web search, calculator, Arxiv query
 - LangGraph state machine for managing LLM/tool orchestration
