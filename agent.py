@@ -22,7 +22,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.schema import Document, HumanMessage, SystemMessage
 from langchain.tools.retriever import create_retriever_tool
-from langgraph.graph import MessagesState, START, StateGraph, GraphConfig
+from langgraph.graph import MessagesState, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 # local reusable tools -------------------------------------------------------
@@ -128,7 +128,7 @@ builder.add_edge("retriever", "assistant")
 builder.add_conditional_edges("assistant", tools_condition)  # → tools or END
 builder.add_edge("tools", "assistant")  # loop back after tool call
 
-agent_graph = builder.compile(config=GraphConfig(recursion_limit=24))
+agent_graph = builder.compile()
 
 # ---------------------------------------------------------------------------
 # 7. helpers
@@ -137,7 +137,9 @@ agent_graph = builder.compile(config=GraphConfig(recursion_limit=24))
 
 def solve(question: str) -> str:
     """Return final answer for a single GAIA question."""
-    out = agent_graph.invoke({"messages": [HumanMessage(content=question)]})
+    out = agent_graph.invoke(
+        {"messages": [HumanMessage(content=question)]}, config={"recursion_limit": 24}
+    )
     return out["messages"][-1].content.strip()
 
 
