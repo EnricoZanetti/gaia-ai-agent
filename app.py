@@ -1,7 +1,9 @@
 import os
+
 import gradio as gr
-import requests
 import pandas as pd
+import requests
+
 from agent import solve
 
 # --- Constants ---
@@ -10,12 +12,13 @@ DEFAULT_API_URL = "https://agents-course-unit4-scoring.hf.space"
 
 # --- Basic Agent Definition ---
 class BasicAgent:
-    """Wraps the LangGraph agent built in agent.py"""
+    """Wraps the LangGraph agent built in agent.py."""
 
     def __init__(self):
         print("LangGraph-based GAIA agent ready.")
 
     def __call__(self, question: str) -> str:
+        """Return answer for a single question."""
         return solve(question)
 
 
@@ -38,13 +41,13 @@ def run_and_submit_all(profile: gr.OAuthProfile | None):
     questions_url = f"{api_url}/questions"
     submit_url = f"{api_url}/submit"
 
-    # 1. Instantiate Agent ( modify this part to create your agent)
+    # 1. Instantiate Agent
     try:
         agent = BasicAgent()
     except Exception as e:
         print(f"Error instantiating agent: {e}")
         return f"Error initializing agent: {e}", None
-    # In the case of an app running as a hugging Face space, this link points toward your codebase ( usefull for others so please keep it public)
+    # In the case of an app running as a hugging Face space, this link points toward your codebase (useful for others so please keep it public)
     agent_code = f"https://huggingface.co/spaces/{space_id}/tree/main"
     print(agent_code)
 
@@ -81,9 +84,7 @@ def run_and_submit_all(profile: gr.OAuthProfile | None):
             continue
         try:
             submitted_answer = agent(question_text)
-            answers_payload.append(
-                {"task_id": task_id, "submitted_answer": submitted_answer}
-            )
+            answers_payload.append({"task_id": task_id, "submitted_answer": submitted_answer})
             results_log.append(
                 {
                     "Task ID": task_id,
@@ -111,7 +112,9 @@ def run_and_submit_all(profile: gr.OAuthProfile | None):
         "agent_code": agent_code,
         "answers": answers_payload,
     }
-    status_update = f"Agent finished. Submitting {len(answers_payload)} answers for user '{username}'..."
+    status_update = (
+        f"Agent finished. Submitting {len(answers_payload)} answers for user '{username}'..."
+    )
     print(status_update)
 
     # 5. Submit
@@ -180,9 +183,7 @@ with gr.Blocks() as demo:
 
     run_button = gr.Button("Run Evaluation & Submit All Answers")
 
-    status_output = gr.Textbox(
-        label="Run Status / Submission Result", lines=5, interactive=False
-    )
+    status_output = gr.Textbox(label="Run Status / Submission Result", lines=5, interactive=False)
     # Removed max_rows=10 from DataFrame constructor
     results_table = gr.DataFrame(label="Questions and Agent Answers", wrap=True)
 
@@ -203,9 +204,7 @@ if __name__ == "__main__":
     if space_id_startup:  # Print repo URLs if SPACE_ID is found
         print(f"✅ SPACE_ID found: {space_id_startup}")
         print(f"   Repo URL: https://huggingface.co/spaces/{space_id_startup}")
-        print(
-            f"   Repo Tree URL: https://huggingface.co/spaces/{space_id_startup}/tree/main"
-        )
+        print(f"   Repo Tree URL: https://huggingface.co/spaces/{space_id_startup}/tree/main")
     else:
         print(
             "ℹ️  SPACE_ID environment variable not found (running locally?). Repo URL cannot be determined."

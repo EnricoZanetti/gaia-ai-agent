@@ -6,9 +6,9 @@ imported directly into `agent.py`.
 
 from __future__ import annotations
 
-from langchain_core.tools import tool
+from langchain_community.document_loaders import ArxivLoader, WikipediaLoader
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_community.document_loaders import WikipediaLoader, ArxivLoader
+from langchain_core.tools import tool
 
 __all__ = [
     "web_search",
@@ -20,10 +20,12 @@ __all__ = [
 
 @tool
 def web_search(query: str) -> str:
-    """Search Tavily for a query and return maximum 3 results.
+    """
+    Search Tavily for a query and return maximum 3 results.
 
     Args:
-        query: The search query."""
+        query: The search query.
+    """
     search_docs = TavilySearchResults(max_results=3).invoke(query=query)
     formatted_search_docs = "\n\n---\n\n".join(
         [
@@ -36,10 +38,12 @@ def web_search(query: str) -> str:
 
 @tool
 def arxiv_search(query: str) -> str:
-    """Search Arxiv for a query and return maximum 3 results.
+    """
+    Search Arxiv for a query and return maximum 3 results.
 
     Args:
-        query: The search query."""
+        query: The search query.
+    """
     search_docs = ArxivLoader(query=query, load_max_doc=3).load()
     formatted_search_docs = "\n\n---\n\n".join(
         [

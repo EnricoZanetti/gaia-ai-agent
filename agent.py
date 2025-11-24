@@ -1,8 +1,7 @@
-# --------------------- agent.py ---------------------
-"""GAIA Level‑1 agent • OpenAI + FAISS + retrieval‑priming
+"""GAIA Level‑1 agent • OpenAI + FAISS + retrieval‑priming.
 
 `python agent.py "What city hosted Expo 2015?"`  → one‑off test
-`python agent.py --submit`                         → answer 20 Qs & POST
+`python agent.py --submit`                       → answer 20 Qs & POST
 """
 
 from __future__ import annotations
@@ -13,21 +12,21 @@ import os
 import pathlib
 import random
 import sys
-from typing import List
 
 import requests
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
 from langchain.schema import Document, HumanMessage, SystemMessage
 from langchain.tools.retriever import create_retriever_tool
-from langgraph.graph import MessagesState, START, StateGraph
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_openai import ChatOpenAI
+from langgraph.graph import START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-# local reusable tools -------------------------------------------------------
-from tools import web_search, wiki_search, calculator, arxiv_search
 from constants import SYSTEM_PROMPT
+
+# local reusable tools -------------------------------------------------------
+from tools import arxiv_search, calculator, web_search, wiki_search
 
 # ---------------------------------------------------------------------------
 # 1. env & constants
@@ -41,9 +40,7 @@ AGENT_CODE_URL = os.getenv("AGENT_CODE_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if not all((API_BASE, SPACE_HOST, AGENT_CODE_URL, OPENAI_API_KEY)):
-    sys.exit(
-        "[agent] 🔑  Missing GAIA_API_BASE / SPACE_HOST / AGENT_CODE_URL / OPENAI_API_KEY"
-    )
+    sys.exit("[agent] 🔑  Missing GAIA_API_BASE / SPACE_HOST / AGENT_CODE_URL / OPENAI_API_KEY")
 
 # ---------------------------------------------------------------------------
 # 2. load metadata examples
@@ -51,7 +48,7 @@ if not all((API_BASE, SPACE_HOST, AGENT_CODE_URL, OPENAI_API_KEY)):
 DATA_PATH = pathlib.Path(__file__).with_name("metadata.jsonl")
 if not DATA_PATH.exists():
     sys.exit("[agent] 📄 metadata.jsonl missing next to agent.py")
-examples: List[dict] = [json.loads(line) for line in DATA_PATH.read_text().splitlines()]
+examples = [json.loads(line) for line in DATA_PATH.read_text().splitlines()]
 
 # ---------------------------------------------------------------------------
 # 3. FAISS retriever for similar‑question priming
@@ -146,9 +143,7 @@ def solve(question: str) -> str:
 def evaluate() -> None:
     """Run evaluation batch and submit to leaderboard."""
     qs = requests.get(f"{API_BASE}/questions", timeout=30).json()
-    answers = [
-        {"task_id": q["id"], "submitted_answer": solve(q["question"])} for q in qs
-    ]
+    answers = [{"task_id": q["id"], "submitted_answer": solve(q["question"])} for q in qs]
     payload = {
         "username": SPACE_HOST,
         "agent_code": AGENT_CODE_URL,
