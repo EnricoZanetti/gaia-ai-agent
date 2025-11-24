@@ -1,22 +1,35 @@
 # Multi-Tool AI Agent (LangGraph + OpenAI + FAISS)
 
 A general-purpose intelligent agent powered by LangGraph, OpenAI’s GPT-4o, and a suite of custom tools.
-The agent autonomously decides when to call tools such as web search, Wikipedia search, scientific paper lookup, FAISS retrieval, and a calculator — combining them with LLM reasoning to produce accurate, grounded answers.
+The agent autonomously decides when to call tools such as web search, Wikipedia search, scientific paper lookup, FAISS retrieval, and a calculator - combining them with LLM reasoning to produce accurate, grounded answers.
 
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![LangGraph](https://img.shields.io/badge/langgraph-✓-blue)
-![HuggingFace](https://img.shields.io/badge/huggingface-spaces-yellow)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
+---
+
+<p align="center">
+  <img src="data/gaia.png" alt="gaia" width="500"/>
+</p>
 
 ---
 
 ## 🔍 Features
 
-- Uses OpenAI `gpt-4o` for reasoning
-- FAISS-based retrieval from solved examples
-- Additional tools: Wikipedia search, web search, calculator, Arxiv query
-- LangGraph state machine for managing LLM/tool orchestration
-- Gradio app for evaluation and leaderboard submission (HF Space ready)
+- **Autonomous Tool Calling**: The agent decides when and which tools to use (RAG, web search, Wikipedia, ArXiv, calculator) using a LangGraph ReAct-style workflow.
+
+- **LangGraph State Machine Orchestration**: A transparent, modular graph design manages reasoning loops, tool calls, and termination conditions - easy to extend or customize.
+
+- **Retrieval-Augmented Generation (RAG)**: Built-in FAISS index over local Q&A examples for grounded responses without external APIs.
+
+- **Optional Real-Time Web Search**: Integrates Tavily for fresh, up-to-date information; automatically degrades gracefully if no API key is provided.
+
+- **Rich Tooling Ecosystem**: Includes Wikipedia and ArXiv search utilities, plus safe arithmetic evaluation - all wrapped as LangChain tools.
+
+- **Clean Gradio Chat Interface**: Modern chat UI with tool-usage visibility, making the agent’s reasoning process more transparent.
+
+- **Fully Open-Source & Extensible**: Designed for learning, experimentation, and showcasing AI agent best practices.
 
 ---
 
