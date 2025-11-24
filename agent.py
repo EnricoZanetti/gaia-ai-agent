@@ -1,170 +1,149 @@
-"""GAIA Level‑1 agent • OpenAI + FAISS + retrieval‑priming.
+"""General multi tool agent • OpenAI + LangGraph + custom tools.
 
-`python agent.py "What city hosted Expo 2015?"`  → one‑off test
-`python agent.py --submit`                       → answer 20 Qs & POST
+Usage:
+    python agent.py "What city hosted Expo 2015?"
+    python agent.py "Find recent papers about diffusion models."
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import os
-import pathlib
-import random
 import sys
 
-import requests
 from dotenv import load_dotenv
-from langchain.schema import Document, HumanMessage, SystemMessage
-from langchain.tools.retriever import create_retriever_tool
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.schema import HumanMessage, SystemMessage, AIMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from constants import SYSTEM_PROMPT
+try:
+    from constants import SYSTEM_PROMPT  # optional / your own prompt
+except ImportError:
+    SYSTEM_PROMPT = (
+        "You are a helpful AI assistant with access to several tools:\n\n"
+        "- similar_question: retrieve similar Q&A from a local knowledge base.\n"
+        "- web_search: search the web for up-to-date information.\n"
+        "- wiki_search: search Wikipedia for background knowledge.\n"
+        "- arxiv_search: look up scientific papers.\n"
+        "- calculator: perform arithmetic calculations.\n\n"
+        "Decide when to call tools. Use tools for factual or numeric questions, "
+        "and combine information from tools with your own reasoning. "
+        "When you answer, be concise but clear, and cite tools you used in natural language."
+    )
 
 # local reusable tools -------------------------------------------------------
-from tools import arxiv_search, calculator, web_search, wiki_search
+from tools import (
+    arxiv_search,
+    calculator,
+    similar_question,
+    web_search,
+    wiki_search,
+)
 
 # ---------------------------------------------------------------------------
-# 1. env & constants
+# 1. env & LLM setup
 # ---------------------------------------------------------------------------
+
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 load_dotenv()
 
-API_BASE = os.getenv("GAIA_API_BASE")
-SPACE_HOST = os.getenv("SPACE_HOST")
-AGENT_CODE_URL = os.getenv("AGENT_CODE_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    sys.exit("[agent] 🔑  Missing OPENAI_API_KEY in environment or .env")
 
-if not all((API_BASE, SPACE_HOST, AGENT_CODE_URL, OPENAI_API_KEY)):
-    sys.exit("[agent] 🔑  Missing GAIA_API_BASE / SPACE_HOST / AGENT_CODE_URL / OPENAI_API_KEY")
-
-# ---------------------------------------------------------------------------
-# 2. load metadata examples
-# ---------------------------------------------------------------------------
-DATA_PATH = pathlib.Path(__file__).with_name("metadata.jsonl")
-if not DATA_PATH.exists():
-    sys.exit("[agent] 📄 metadata.jsonl missing next to agent.py")
-examples = [json.loads(line) for line in DATA_PATH.read_text().splitlines()]
-
-# ---------------------------------------------------------------------------
-# 3. FAISS retriever for similar‑question priming
-# ---------------------------------------------------------------------------
-embedder = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-
-_documents = [
-    Document(
-        page_content=f"Question: {e['Question']}\nAnswer: {e['Final answer']}",
-        metadata={"task_id": e["task_id"]},
-    )
-    for e in examples
-]
-
-vstore = FAISS.from_documents(_documents, embedder)
-retriever = vstore.as_retriever(search_kwargs={"k": 3})
-
-similar_q_tool = create_retriever_tool(
-    retriever,
-    name="similar_questions",
-    description="Return up to three previously‑solved GAIA Level‑1 Q&A pairs relevant to the query.",
-)
+sys_msg = SystemMessage(content=SYSTEM_PROMPT)
 
 TOOLS = [
-    similar_q_tool,
+    similar_question,
     web_search,
     wiki_search,
     calculator,
     arxiv_search,
 ]
 
-# ---------------------------------------------------------------------------
-# 4. system prompt (few‑shot)
-# ---------------------------------------------------------------------------
-few_shots = random.sample(examples, k=3)
-for ex in few_shots:
-    SYSTEM_PROMPT += f"\nQ: {ex['Question']}\nA: {ex['Final answer']}"
-
-sys_msg = SystemMessage(content=SYSTEM_PROMPT)
-
-# ---------------------------------------------------------------------------
-# 5. LLM + tool binding
-# ---------------------------------------------------------------------------
-llm = ChatOpenAI(model="gpt-4o", temperature=0).bind_tools(TOOLS)
-
-# ---------------------------------------------------------------------------
-# 6. LangGraph nodes
-# ---------------------------------------------------------------------------
+# Bind tools to the LLM
+llm = ChatOpenAI(
+    model="gpt-4o-mini",  # or "gpt-4o" if you prefer
+    temperature=0.2,
+).bind_tools(TOOLS)
 
 
-def node_retriever(state: MessagesState):
-    """Prepend best‑match solved QA as additional context."""
-    query = state["messages"][0].content
-    hit1, hit2, *_ = vstore.similarity_search(query, k=2)
-    reference = HumanMessage(content=f"{hit1.page_content}\n\n---\n{hit2.page_content}")
-    return {"messages": [sys_msg, reference] + state["messages"]}
+# ---------------------------------------------------------------------------
+# 2. LangGraph nodes
+# ---------------------------------------------------------------------------
 
 
 def node_assistant(state: MessagesState):
-    """Run the LLM once."""
-    return {"messages": [llm.invoke(state["messages"])]}
+    """Single LLM step (can decide to call tools)."""
+    response = llm.invoke(state["messages"])
+    return {"messages": [response]}
 
 
-# build graph ----------------------------------------------------------------
+# Build graph ---------------------------------------------------------------
 builder = StateGraph(MessagesState)
 
-builder.add_node("retriever", node_retriever)
 builder.add_node("assistant", node_assistant)
 builder.add_node("tools", ToolNode(TOOLS))
 
-builder.add_edge(START, "retriever")
-builder.add_edge("retriever", "assistant")
-
-builder.add_conditional_edges("assistant", tools_condition)  # → tools or END
-builder.add_edge("tools", "assistant")  # loop back after tool call
+builder.add_edge(START, "assistant")
+builder.add_conditional_edges("assistant", tools_condition)
+builder.add_edge("tools", "assistant")
 
 agent_graph = builder.compile()
 
 # ---------------------------------------------------------------------------
-# 7. helpers
+# 3. Public API
 # ---------------------------------------------------------------------------
 
 
-def solve(question: str) -> str:
-    """Return final answer for a single GAIA question."""
-    out = agent_graph.invoke(
-        {"messages": [HumanMessage(content=question)]}, config={"recursion_limit": 24}
+def solve(question: str):
+    """Run the agent and return both the final answer and a list of tool calls."""
+    result = agent_graph.invoke(
+        {"messages": [sys_msg, HumanMessage(content=question)]},
+        config={"recursion_limit": 24},
     )
-    return out["messages"][-1].content.strip()
 
+    messages = result["messages"]
 
-def evaluate() -> None:
-    """Run evaluation batch and submit to leaderboard."""
-    qs = requests.get(f"{API_BASE}/questions", timeout=30).json()
-    answers = [{"task_id": q["id"], "submitted_answer": solve(q["question"])} for q in qs]
-    payload = {
-        "username": SPACE_HOST,
-        "agent_code": AGENT_CODE_URL,
-        "answers": answers,
-    }
-    res = requests.post(f"{API_BASE}/submit", json=payload, timeout=60)
-    print("[agent] 🏆", res.status_code, res.text)
+    tool_calls = []
+    final_answer = ""
+
+    for msg in messages:
+        # Only AI/assistant messages can be the final answer
+        if isinstance(msg, AIMessage) and not getattr(msg, "tool_calls", None):
+            # keep updating; the last such message is the final answer
+            final_answer = msg.content
+
+        # Extract tool calls (if any) from messages that have this attribute
+        msg_tool_calls = getattr(msg, "tool_calls", None)
+        if msg_tool_calls:
+            for call in msg_tool_calls:
+                tool_calls.append(call["name"])
+
+    # Remove duplicates while preserving order
+    seen = set()
+    tool_calls_unique = [t for t in tool_calls if not (t in seen or seen.add(t))]
+
+    return final_answer.strip(), tool_calls_unique
 
 
 # ---------------------------------------------------------------------------
-# 8. CLI
+# 4. CLI
 # ---------------------------------------------------------------------------
+
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("question", nargs="*", help="manual question")
-    p.add_argument("--submit", action="store_true")
-    args = p.parse_args()
+    parser = argparse.ArgumentParser(
+        description="General multi-tool AI agent (LangGraph + OpenAI)."
+    )
+    parser.add_argument("question", nargs="+", help="Question to ask the agent")
+    args = parser.parse_args()
 
-    if args.submit:
-        evaluate()
-    elif args.question:
-        print(solve(" ".join(args.question)))
+    question = " ".join(args.question)
+    answer, tools_used = solve(question)
+
+    print(answer)
+    if tools_used:
+        print("\n[tools used]", ", ".join(tools_used))
     else:
-        p.print_help()
+        print("\n[tools used] none")

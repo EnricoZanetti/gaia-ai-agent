@@ -1,6 +1,7 @@
-# GAIA Level‑1 Agent (LangGraph + OpenAI + FAISS)
+# Multi-Tool AI Agent (LangGraph + OpenAI + FAISS)
 
-An intelligent agent designed to solve GAIA Level‑1 benchmark questions using retrieval-augmented generation (RAG), OpenAI's GPT-4o, and LangGraph orchestration.
+A general-purpose intelligent agent powered by LangGraph, OpenAI’s GPT-4o, and a suite of custom tools.
+The agent autonomously decides when to call tools such as web search, Wikipedia search, scientific paper lookup, FAISS retrieval, and a calculator — combining them with LLM reasoning to produce accurate, grounded answers.
 
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![LangGraph](https://img.shields.io/badge/langgraph-✓-blue)
@@ -23,19 +24,15 @@ An intelligent agent designed to solve GAIA Level‑1 benchmark questions using 
 
 ```bash
 .
-├── agent.py          # Agent logic and LangGraph pipeline
-├── app.py            # Gradio UI for running evaluation
-├── tools.py          # All custom tools used by the agent
-├── metadata.jsonl    # Training data for vector store
-├── .env              # Local environment variables (not committed)
-├── requirements.txt  # Python dependencies
+├── agent.py          # LangGraph pipeline + tool routing logic
+├── app.py            # Gradio UI (chat-style) with tool-call display
+├── tools.py          # Custom tools (RAG, web search, wiki, arxiv, calculator)
+├── data/
+│   └── metadata.jsonl  # Q&A examples used for local FAISS retrieval
+├── constants.py      # Optional system prompt
+├── .env              # API keys (not committed)
+├── requirements.txt  # Dependencies
 ````
-
----
-
-## 🚀 Try it on Hugging Face Spaces
-
-[![HF Space](https://img.shields.io/badge/HuggingFace-Live%20Demo-orange)](https://huggingface.co/spaces/enricozan/gaia-ai-agent/tree/main)
 
 ---
 
@@ -51,33 +48,33 @@ cd gaia-ai-agent
 ### 2. Create and activate environment
 
 ```bash
-conda create -n gaia python=3.11
-conda activate gaia
-pip install -r requirements.txt
+conda create -n agent python=3.11
+conda activate agent
+uv pip install -r requirements.txt
 ```
 
 ### 3. Create a `.env` file
 
 ```env
-OPENAI_API_KEY=your_openai_key
-GAIA_API_BASE=https://agents-course-unit4-scoring.hf.space
-SPACE_HOST=your_huggingface_username
-AGENT_CODE_URL=https://huggingface.co/spaces/your-username/your-space-name/tree/main
+OPENAI_API_KEY=your_openai_key_here
+TAVILY_API_KEY=optional_web_search_key
 ```
+
+Web search is optional: if no Tavily key is provided, the tool gracefully disables itself.
 
 ### 4. Run CLI
 
 ```bash
-python agent.py "What city hosted Expo 2015?"
+python agent.py "Who discovered penicillin?"
 ```
 
-Or evaluate and submit:
+or:
 
 ```bash
-python agent.py --submit
+python agent.py "Summarize the main ideas of diffusion models."
 ```
 
-### 5. Run Gradio app
+### 5. Launch the Gradio Chat UI
 
 ```bash
 python app.py
@@ -87,11 +84,24 @@ python app.py
 
 ## 🧠 Tools
 
-* `similar_questions`: Retrieve similar solved Q\&A from FAISS
-* `wiki_search`: Fetch Wikipedia snippets
-* `web_search`: Use Tavily search engine
-* `arvix_search`: Academic paper search (Arxiv)
-* `calculator`: Basic math eval
+| Tool                 | Description                                  |
+| -------------------- | -------------------------------------------- |
+| **similar_question** | Retrieves similar Q&A examples via FAISS RAG |
+| **web_search**       | Up-to-date search using Tavily (optional)    |
+| **wiki_search**      | Fetches relevant Wikipedia snippets          |
+| **arxiv_search**     | Academic paper search (ArXiv)                |
+| **calculator**       | Safe arithmetic computation                  |
+
+The agent selects tools automatically using a ReAct-style LangGraph workflow.
+
+---
+
+## 🔒 Environment Variables
+
+| Variable         | Purpose                            |
+| ---------------- | ---------------------------------- |
+| `OPENAI_API_KEY` | Required – model inference         |
+| `TAVILY_API_KEY` | Optional – enables real web search |
 
 ---
 
