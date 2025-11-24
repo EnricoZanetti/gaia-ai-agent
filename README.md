@@ -106,5 +106,4 @@ The agent selects tools automatically using a ReAct-style LangGraph workflow.
 ---
 
 ## 📝 License
-
 This project is licensed under the MIT License.
