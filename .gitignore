@@ -1,4 +1,17 @@
+# Secrets and credentials — never commit these
 .env
+credentials.json
+token.json
+
+# Python
 __pycache__/
-.gradio
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# IDE
 .vscode/
+
+# OS
+.DS_Store
