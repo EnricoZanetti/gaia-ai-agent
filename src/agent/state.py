@@ -4,7 +4,7 @@ LangGraph state definition for the morning report agent.
 MorningReportState is the single shared object that flows through every node.
 Fields that are written by the three parallel fetch nodes use operator.add as
 their reducer so that each node's output is *appended* to the list rather than
-overwriting it — this is how LangGraph merges results from parallel branches.
+overwriting it - this is how LangGraph merges results from parallel branches.
 """
 
 import operator
@@ -20,7 +20,7 @@ from typing_extensions import TypedDict
 
 class CalendarEvent(TypedDict):
     title: str
-    start: str        # ISO-8601 datetime or date string
+    start: str  # ISO-8601 datetime or date string
     end: str
     location: str | None
     description: str | None
@@ -29,7 +29,7 @@ class CalendarEvent(TypedDict):
 class EmailItem(TypedDict):
     sender: str
     subject: str
-    snippet: str      # short preview; full body is not downloaded
+    snippet: str  # short preview; full body is not downloaded
     received_at: str  # RFC 2822 date string
 
 
@@ -56,7 +56,7 @@ class MorningReportState(TypedDict):
     exactly one node so no reducer is needed.
     """
 
-    # Input — populated once at graph entry from UserConfig
+    # Input - populated once at graph entry from UserConfig
     user_name: str
     recipient_email: str
     news_topics: list[str]

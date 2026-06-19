@@ -1,5 +1,5 @@
 """
-Morning Report Agent — entry point.
+Morning Report Agent - entry point.
 
 Usage
 -----

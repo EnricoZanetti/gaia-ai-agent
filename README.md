@@ -1,7 +1,7 @@
 # Morning Report Agent
 
 An AI agent that generates and emails a personalised morning briefing every day.
-It aggregates your **Google Calendar schedule**, **recent unread emails**, and **top news** for your chosen topics and location — then uses Claude to synthesise everything into a clean HTML email delivered straight to your inbox.
+It aggregates your **Google Calendar schedule**, **recent unread emails**, and **top news** for your chosen topics and location - then uses Claude to synthesise everything into a clean HTML email delivered straight to your inbox.
 
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![LangGraph](https://img.shields.io/badge/langgraph-✓-blue)
@@ -29,19 +29,19 @@ The agent is built with **LangGraph** and follows a fan-out → fan-in workflow:
                          END
 ```
 
-The three data-fetching nodes run **in parallel** — LangGraph fans them out from `START` and automatically waits for all three to complete before the report is generated.  Each node writes into a shared `MorningReportState` using append reducers, so parallel writes never overwrite each other.
+The three data-fetching nodes run **in parallel** - LangGraph fans them out from `START` and automatically waits for all three to complete before the report is generated.  Each node writes into a shared `MorningReportState` using append reducers, so parallel writes never overwrite each other.
 
 ---
 
 ## Features
 
-- **Parallel data fetching** — calendar, email, and news are fetched simultaneously via LangGraph's fan-out pattern, minimising total runtime.
-- **Google Calendar integration** — lists today's events with times and locations.
-- **Gmail integration** — surfaces unread emails from the last 24 hours (metadata only — no full body downloads).
-- **News aggregation** — queries [NewsAPI](https://newsapi.org) per topic and deduplicates results across topics.
-- **LLM-powered synthesis** — Claude reads the raw data and writes a concise, well-formatted HTML briefing.
-- **Email delivery** — the finished report is sent via the Gmail API from your own account.
-- **Graceful degradation** — any fetch node that fails logs a warning and returns an empty list; the report is still generated and sent with whatever data is available.
+- **Parallel data fetching** - calendar, email, and news are fetched simultaneously via LangGraph's fan-out pattern, minimising total runtime.
+- **Google Calendar integration** - lists today's events with times and locations.
+- **Gmail integration** - surfaces unread emails from the last 24 hours (metadata only - no full body downloads).
+- **News aggregation** - queries [NewsAPI](https://newsapi.org) per topic and deduplicates results across topics.
+- **LLM-powered synthesis** - Claude reads the raw data and writes a concise, well-formatted HTML briefing.
+- **Email delivery** - the finished report is sent via the Gmail API from your own account.
+- **Graceful degradation** - any fetch node that fails logs a warning and returns an empty list; the report is still generated and sent with whatever data is available.
 
 ---
 
@@ -51,7 +51,7 @@ The three data-fetching nodes run **in parallel** — LangGraph fans them out fr
 gaia-ai-agent/
 ├── main.py                   # CLI entry point
 ├── src/
-│   ├── config.py             # UserConfig — loads settings from .env
+│   ├── config.py             # UserConfig - loads settings from .env
 │   ├── agent/
 │   │   ├── state.py          # MorningReportState TypedDict + sub-record types
 │   │   ├── nodes.py          # Node functions (fetch_*, generate_report, send_email)
@@ -115,12 +115,12 @@ python main.py
 
 ### LLM provider
 
-Set **one** of the two API keys below (or both — Anthropic is preferred when both are present).
+Set **one** of the two API keys below (or both - Anthropic is preferred when both are present).
 
 | Variable           | Description                                              |
 |--------------------|----------------------------------------------------------|
-| `ANTHROPIC_API_KEY`| [Anthropic](https://console.anthropic.com) key — uses Claude |
-| `OPENAI_API_KEY`   | [OpenAI](https://platform.openai.com/api-keys) key — uses GPT |
+| `ANTHROPIC_API_KEY`| [Anthropic](https://console.anthropic.com) key - uses Claude |
+| `OPENAI_API_KEY`   | [OpenAI](https://platform.openai.com/api-keys) key - uses GPT |
 | `LLM_PROVIDER`     | Optional override: `"anthropic"` or `"openai"` (auto-detected otherwise) |
 | `LLM_MODEL`        | Optional model override (defaults: `claude-sonnet-4-6` / `gpt-4o`) |
 
@@ -129,10 +129,10 @@ Set **one** of the two API keys below (or both — Anthropic is preferred when b
 | Variable           | Required | Description                                              |
 |--------------------|----------|----------------------------------------------------------|
 | `RECIPIENT_EMAIL`  | ✅       | Email address the report is delivered to                 |
-| `USER_NAME`        | —        | Your name, used in the greeting (default: `Friend`)      |
-| `NEWS_API_KEY`     | —        | [NewsAPI](https://newsapi.org) key; news skipped if absent |
-| `NEWS_TOPICS`      | —        | Comma-separated topics, e.g. `technology,AI,finance`     |
-| `NEWS_LOCATION`    | —        | ISO country code for headlines, e.g. `us`, `gb` (default: `us`) |
+| `USER_NAME`        | -        | Your name, used in the greeting (default: `Friend`)      |
+| `NEWS_API_KEY`     | -        | [NewsAPI](https://newsapi.org) key; news skipped if absent |
+| `NEWS_TOPICS`      | -        | Comma-separated topics, e.g. `technology,AI,finance`     |
+| `NEWS_LOCATION`    | -        | ISO country code for headlines, e.g. `us`, `gb` (default: `us`) |
 
 ---
 
@@ -141,7 +141,7 @@ Set **one** of the two API keys below (or both — Anthropic is preferred when b
 | Component      | Library / Service                         |
 |----------------|-------------------------------------------|
 | Agent framework | [LangGraph](https://github.com/langchain-ai/langgraph) |
-| LLM            | [Claude](https://www.anthropic.com) or [GPT](https://openai.com) — auto-selected from available key |
+| LLM            | [Claude](https://www.anthropic.com) or [GPT](https://openai.com) - auto-selected from available key |
 | Calendar       | Google Calendar API (`google-api-python-client`) |
 | Email          | Gmail API (`google-api-python-client`)    |
 | News           | [NewsAPI](https://newsapi.org)            |
@@ -151,4 +151,4 @@ Set **one** of the two API keys below (or both — Anthropic is preferred when b
 
 ## License
 
-MIT — see [LICENCE](LICENCE).
+MIT - see [LICENCE](LICENCE).

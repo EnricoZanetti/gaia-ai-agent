@@ -7,11 +7,11 @@ dict that LangGraph merges back into the state via the field reducers.
 
 Node responsibilities
 ---------------------
-fetch_calendar_node  — pulls today's Google Calendar events
-fetch_emails_node    — pulls recent unread Gmail messages
-fetch_news_node      — pulls top headlines by topic/location via NewsAPI
-generate_report_node — synthesises all data into an HTML report (LLM-powered)
-send_email_node      — delivers the report to the configured recipient
+fetch_calendar_node  - pulls today's Google Calendar events
+fetch_emails_node    - pulls recent unread Gmail messages
+fetch_news_node      - pulls top headlines by topic/location via NewsAPI
+generate_report_node - synthesises all data into an HTML report (LLM-powered)
+send_email_node      - delivers the report to the configured recipient
 """
 
 from datetime import datetime
@@ -111,7 +111,7 @@ def generate_report_node(state: MorningReportState) -> dict:
     sections.append("## Today's Schedule")
     if state["calendar_events"]:
         for event in state["calendar_events"]:
-            line = f"- {event['start']} — {event['title']}"
+            line = f"- {event['start']} - {event['title']}"
             if event.get("location"):
                 line += f" @ {event['location']}"
             sections.append(line)
@@ -130,7 +130,7 @@ def generate_report_node(state: MorningReportState) -> dict:
 
     # News
     topic_label = ", ".join(state["news_topics"])
-    sections.append(f"\n## Top News — {topic_label} ({state['location'].upper()})")
+    sections.append(f"\n## Top News - {topic_label} ({state['location'].upper()})")
     if state["news_items"]:
         for item in state["news_items"]:
             sections.append(f"- [{item['source']}] {item['title']}")
@@ -158,7 +158,7 @@ def generate_report_node(state: MorningReportState) -> dict:
                 "well-formatted HTML email body. Use <h2> headings for each section, "
                 "<ul>/<li> for bullet points, and <strong> for key items. "
                 "Keep the tone warm but professional. Aim for under 500 words. "
-                "Do NOT wrap output in <html>, <head>, or <body> tags — "
+                "Do NOT wrap output in <html>, <head>, or <body> tags - "
                 "return only the inner content that goes inside <body>."
             )
         ),
@@ -180,7 +180,7 @@ def send_email_node(state: MorningReportState) -> dict:
         return {"email_sent": False, "errors": ["Report generation produced no content."]}
 
     today = datetime.now().strftime("%B %d, %Y")
-    subject = f"☀️ Morning Briefing — {today}"
+    subject = f"☀️ Morning Briefing - {today}"
 
     try:
         send_email(

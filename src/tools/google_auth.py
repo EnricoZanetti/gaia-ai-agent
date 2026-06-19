@@ -19,7 +19,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-# All scopes requested upfront — requesting them separately would force
+# All scopes requested upfront - requesting them separately would force
 # the user to re-authorize every time a new scope is added.
 SCOPES = [
     "https://www.googleapis.com/auth/calendar.readonly",
@@ -27,7 +27,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
 ]
 
-# Both files live in the project root (not committed — see .gitignore)
+# Both files live in the project root (not committed - see .gitignore)
 CREDENTIALS_FILE = Path("credentials.json")
 TOKEN_FILE = Path("token.json")
 
@@ -38,7 +38,7 @@ def get_credentials() -> Credentials:
 
     Flow:
     1. Load cached token from token.json if it exists.
-    2. Refresh it if expired (uses the stored refresh token — no browser).
+    2. Refresh it if expired (uses the stored refresh token - no browser).
     3. Run the full browser-based OAuth flow only if no valid token exists.
     4. Persist the resulting credentials back to token.json.
     """

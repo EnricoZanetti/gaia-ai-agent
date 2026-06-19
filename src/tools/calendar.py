@@ -5,7 +5,7 @@ Fetches all events scheduled for today from the user's primary calendar,
 ordered by start time.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from googleapiclient.discovery import build
 
@@ -17,15 +17,15 @@ def get_todays_events() -> list[dict]:
     Return today's calendar events from Google Calendar.
 
     Each event is a dict with keys:
-        title       (str)  — event summary
-        start       (str)  — ISO-8601 start datetime or date
-        end         (str)  — ISO-8601 end datetime or date
+        title       (str)  - event summary
+        start       (str)  - ISO-8601 start datetime or date
+        end         (str)  - ISO-8601 end datetime or date
         location    (str | None)
         description (str | None)
     """
     service = build("calendar", "v3", credentials=get_credentials())
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     # Query window: midnight → 23:59:59 today (UTC)
     time_min = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
     time_max = now.replace(hour=23, minute=59, second=59, microsecond=0).isoformat()
@@ -36,7 +36,7 @@ def get_todays_events() -> list[dict]:
             calendarId="primary",
             timeMin=time_min,
             timeMax=time_max,
-            singleEvents=True,   # expand recurring events into individual instances
+            singleEvents=True,  # expand recurring events into individual instances
             orderBy="startTime",
         )
         .execute()

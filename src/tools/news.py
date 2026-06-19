@@ -33,15 +33,17 @@ def get_news_for_topics(
         country: ISO 3166-1 alpha-2 country code for localised headlines.
         api_key: NewsAPI key. Falls back to the NEWS_API_KEY env variable.
 
-    Returns:
+    Returns
+    -------
         List of article dicts with keys:
             title        (str)
-            source       (str)  — publication name
+            source       (str)  - publication name
             url          (str)
             description  (str)
-            published_at (str)  — ISO-8601 datetime string
+            published_at (str)  - ISO-8601 datetime string
 
-    Notes:
+    Notes
+    -----
         - Returns a single placeholder item when no API key is configured
           so the rest of the graph can still run without crashing.
         - Duplicate articles (same URL appearing under multiple topics) are
@@ -51,7 +53,7 @@ def get_news_for_topics(
     if not key:
         return [
             {
-                "title": "News section unavailable — set NEWS_API_KEY to enable",
+                "title": "News section unavailable - set NEWS_API_KEY to enable",
                 "source": "",
                 "url": "",
                 "description": "",

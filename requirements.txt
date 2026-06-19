@@ -5,7 +5,7 @@ langchain-anthropic>=0.3.0   # for Anthropic / Claude
 langchain-openai>=0.3.0      # for OpenAI / GPT
 python-dotenv>=1.1.0
 
-# Google APIs — Calendar and Gmail
+# Google APIs - Calendar and Gmail
 google-auth>=2.30.0
 google-auth-oauthlib>=1.2.0
 google-auth-httplib2>=0.2.0

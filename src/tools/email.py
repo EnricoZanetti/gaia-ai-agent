@@ -1,9 +1,9 @@
 """
 Gmail integration for reading recent emails and sending the morning report.
 
-Reading  — fetches metadata (sender, subject, snippet) for unread emails
+Reading  - fetches metadata (sender, subject, snippet) for unread emails
            received in the last 24 hours, without downloading full bodies.
-Sending  — composes and sends an HTML email via the Gmail send API.
+Sending  - composes and sends an HTML email via the Gmail send API.
 """
 
 import base64
@@ -20,13 +20,13 @@ def get_recent_emails(max_results: int = 10) -> list[dict]:
     Return recent unread emails from the last 24 hours.
 
     Fetches only metadata (no full body download) to stay fast and
-    respect privacy — the snippet field gives enough context for a briefing.
+    respect privacy - the snippet field gives enough context for a briefing.
 
     Each item is a dict with keys:
         sender      (str)
         subject     (str)
-        snippet     (str)  — short preview of the message body
-        received_at (str)  — RFC 2822 date string from the Date header
+        snippet     (str)  - short preview of the message body
+        received_at (str)  - RFC 2822 date string from the Date header
     """
     service = build("gmail", "v1", credentials=get_credentials())
 
@@ -73,7 +73,8 @@ def send_email(to: str, subject: str, body_html: str) -> bool:
         subject:   Email subject line.
         body_html: HTML body content (inner content only, no <html>/<body> tags needed).
 
-    Returns:
+    Returns
+    -------
         True if the message was accepted by the API.
     """
     service = build("gmail", "v1", credentials=get_credentials())

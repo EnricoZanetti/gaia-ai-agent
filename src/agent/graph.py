@@ -1,7 +1,7 @@
 """
 LangGraph StateGraph for the morning report agent.
 
-Graph topology — fan-out then fan-in:
+Graph topology - fan-out then fan-in:
 
                         START
                           │

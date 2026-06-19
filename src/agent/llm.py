@@ -14,7 +14,7 @@ import os
 
 from langchain_core.language_models import BaseChatModel
 
-# Default models — override with LLM_MODEL in .env
+# Default models - override with LLM_MODEL in .env
 _DEFAULT_MODELS = {
     "anthropic": "claude-sonnet-4-6",
     "openai": "gpt-4o",
